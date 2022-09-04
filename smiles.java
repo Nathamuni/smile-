@@ -59,6 +59,11 @@ public class smiles {
                 arr[i][i-1]= 1;
                 count++;
             }
+            else if(array.contains(i-1))
+            {
+                arr[i][i-2]=1;
+                arr[i][i+1]=1;
+            }
             else {
                 arr[i][i - 1] = arr[i][i + 1] = 1;
             }
