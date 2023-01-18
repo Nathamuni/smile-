@@ -4,24 +4,30 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 namespace xyz
 {
     class WeightedGraph
     {
         //INPUT SMILES
-        static string sb = "C-C(-Cl-C(=O)=O)(-C1-C-C-C1)"; 
+        static string sb = "C-C(-Cl=1-C(=O)-C1)(-Cl)=O"; 
+
         //CONVERTING THE INPUT SMILES STRING INTO CHARACTER ARRAY-->RES
         //FOR EASY TRAVERSAL
         static char[] res = sb.ToCharArray();
+
         //ADJACENCY LIST CONTAINING FOR GRAPH NODES CONNECTIONS
         public Dictionary<int, Dictionary<int, int>> adjacencyList;
-        
-        //CREATING OBJECT 
+
+        //CREATING OBJECT <GRAPH> 
         static WeightedGraph graph = new WeightedGraph();
 
+        //USED FOR STORING THE IMPLICIT HYDROGENS COUNT 
+        // HydrogenCount --> < INDEX_VALUE , NUMBER OF IMPLICIT HYDROGENS >
         public Dictionary<int,int> HydrogenCount;
-        static int[] implicitHydrogen = new int[sb.Length];
-        //readonly
+
+       //readonly
+       // Elements --> CONTAINS ALL THE < ELEMENT_NAME , VALENCE_ELECTRONS > PAIR
         public static readonly Dictionary<string,int> Elements = new Dictionary<string, int>()
         {
             {"H",1},{"He",2},{"Li",1},{"Be",2},{"B",3},{"C",4},{"N",5},
@@ -41,29 +47,26 @@ namespace xyz
             {"Es",13},{"Fm",14},{"Md",15},{"No",16},{"Lr",3},{"Rf",4},{"Db",5},
             {"Sg",6},{"Bh",7},{"Hs",8},{"Mt",9},{"Ds",10},{"Rg",11},{"Cn",12},
             {"Nh",3},{"Fl",4},{"Mc",5},{"Lv",6},{"Ts",7},{"Og",8}
-            //,{"Ti",3}
-        };
-        public static readonly Dictionary<char,int> bonds = new Dictionary<char, int>()
-        {
-            {'-',1},{'=',2},{'#',3},{'$', 4},{'.', 0}
-            // {':',1.5},
         };
 
-        // public static readonly Dictionary<char,int> organicSubset = new Dictionary<String, int>()
-        // {//B, C, N, O, P, S, F, Cl, Br, and I
-        //     //{"B",3},{"C",4},{"O",2},{"P",5},{"P",3},{'S',6},{'S',4},{'S',2},{'F',1},{'Cl',1},{'Br',1},{'I',}
-        // }
+        // bonds --> CONTAINS ALL THE < BOND , BOND_VALUE > PAIRS
+        public static readonly Dictionary<char,int> bonds = new Dictionary<char, int>()
+        {
+            {'-',1},{'=',2},{'#',3},{'$', 4},{'.', 0},{':',1}
+        };
 
         //CONSTRUCTOR 
         public WeightedGraph()
         {
+            //INITIALIZING adjacencyList AND HydrogenCount AS EMPTY LISTS
             this.adjacencyList = new Dictionary<int , Dictionary<int, int>>(){};
             this.HydrogenCount = new Dictionary<int, int>(){};
         }
+
         //VERTEX CREATION-->Add new vertex
         public void addVertex(int vertex) 
         {
-            if (!this.adjacencyList.ContainsKey(vertex))
+            if(!this.adjacencyList.ContainsKey(vertex))
             {
                 this.adjacencyList.Add(vertex, new Dictionary<int, int>());
             }
@@ -72,6 +75,7 @@ namespace xyz
                 Console.WriteLine("this vertex is in use");
             }
         }
+
         //CREATION OF EDGES BETWEEN NODES--> New edge between 2 vertices
         public void addEdge(int v1, int v2, int weight) 
         {
@@ -85,7 +89,8 @@ namespace xyz
                 Console.WriteLine("Error: Vertex does not exist");
             }
         }
-        //findindexvalues-->USED FOR FINDING THE BOND BEFORE THE GIVEN INDEX
+
+        //findindexvalues-->USED FOR FINDING THE BOND BEFORE/AFTER THE GIVEN INDEX
         public int findindexvalues(int idx,int logic)
         {
             int bond=0;
@@ -93,41 +98,39 @@ namespace xyz
             if(logic==0) bond = bonds[res[idx+1]];
             return bond;
         }
+
+        //implicitHydrogenIndex--> CALCULATES THE IMPLICIT HYDROGEN COUNT OF EACH ELEMENT AND ADDS IT TO THE HydrogenCount DICTIONARY
         static void implicitHydrogenIndex()
         {
             int valency=0;
             int bondsCount=0;
             int element= 0;
+            string firstLetter = "";
+            string secondLetter = "";
+            bool isit =false;
             foreach (var x in graph.adjacencyList)
             {
                 valency=0;
                 bondsCount=0;
-                // if(Elements[char.ToString(res[x.Key])])
-                //cl
-                //0
-                //z=c && l=l
-
-                //          cl
-                //          01    
-                //          x.key-->0  ;  z=c ; l=l ; new1=cl ; if(Elements.containsKey(cl)) element=
-                //
-                //
-                string z = char.ToString(res[x.Key]);
-                string l ="";
-                bool isit = false;
+                firstLetter = char.ToString(res[x.Key]);
+                secondLetter = "";
+                isit = false;
                 if(x.Key<res.Length-1) 
                 {
-                    l = char.ToString(res[x.Key+1]);
+                    secondLetter = char.ToString(res[x.Key+1]);
                 }
-                string new1 = string.Join("",z,l);
-                if(Elements.ContainsKey(new1)) isit=true;
+                string newelement = string.Join("",firstLetter,secondLetter);
+                if(Elements.ContainsKey(newelement))
+                {
+                    isit=true;
+                }
                 if(isit==false)
                 {
                     element=Elements[char.ToString(res[x.Key])];
                 }
                 else
                 {
-                        element=Elements[new1];
+                    element=Elements[newelement];
                 }
                 foreach(KeyValuePair<int, int> y in x.Value)
                 {
@@ -141,99 +144,85 @@ namespace xyz
                 Console.WriteLine(ele.Key +"-->"+ ele.Value);
             }
         }
+
+        // adjacencyMatrix --> GENERATES THE ADJACENCY MATRIX 
         static void adjacencyMatrix(int size)
         {
-            //int Matrix_size = graph.adjacencyList.Count;
+            //DUMMY
+            //size --> NO OF ELEMENTS IN THE GIVEN INPUT SMILES NOTATION
+            //Matrix_size --> LENGTH OF THE GIVEN INPUT SMILES NOTATION 
+            int sum=0,n=0,m=0;
             int Matrix_size = res.Length; 
-            int[,] arr = new int[Matrix_size,Matrix_size];
-            int sum1=0;
-            int[,] nums = new int[size,size];
-            int[] arr1 = new int[Matrix_size];
-            int n=0,m=0;
+            int[,] array = new int[Matrix_size,Matrix_size];
+            int[] check = new int[Matrix_size];
+            int[,] adjacencyMatrix = new int[size,size];
 
+            //GENERATE THE BIG MATRIX
             foreach(var x in graph.adjacencyList)
             {
                 foreach(KeyValuePair<int, int> y in x.Value)
                 {
-                    arr[x.Key,y.Key] = 1;
+                    array[x.Key,y.Key] = 1;
                 }
+            }
+            //LOGIC TO REDUCE THE BIG MATRIX TO SMALLER ONE
+            for(int i=0;i<Matrix_size;i++)
+            {
+                sum=0;
+                for(int j=0;j<Matrix_size;j++)
+                {
+                    sum+=array[i,j];
+                }
+                if(sum!=0) check[i]=1;
             }
 
             for(int i=0;i<Matrix_size;i++)
             {
-                sum1=0;
-                for(int j=0;j<Matrix_size;j++)
-                {
-                    sum1=sum1+arr[i,j];
-                }
-                if(sum1!=0) arr1[i]=1;
-            }
-            for(int i=0;i<arr1.Length;i++) Console.Write(arr1[i]+" ");
-            Console.WriteLine();
-            for(int i=0;i<Matrix_size;i++)
-            {
-                if(arr1[i]!=0)
+                if(check[i]!=0)
                 {
                     n=0;
                     for(int j=0;j<Matrix_size;j++)
                     {
-                        if(arr1[j]!=0) 
+                        if(check[j]!=0) 
                         {
-                            nums[m,n]=arr[i,j];
+                            adjacencyMatrix[m,n]=array[i,j];
                             n++;
                         }
                     }
                     m++;
                 }
             }
-            Console.WriteLine();
+            //PRINTING THE ADJACENCY MATRIX
             for(int i=0;i<size;i++)
             {
                 for(int j=0;j<size;j++)
                 {
-                    Console.Write(nums[i,j]+" ");
+                    Console.Write(adjacencyMatrix[i,j]+" ");
                 }
                 Console.WriteLine();
             }
         }
+
         //MAIN METHOD
         static void Main(string[] args)
         {
-
-            // CREATING A LIST WITHOUT ANY BONDS
+            // CREATING A LIST WITHOUT ANY BONDS -->contains only elements
             var res2 = new ArrayList();
 
-            for (int i = 0; i < res.Length; i++)
+            //TRAVERSING THROUGH THE INPUT SMILES NOTATION INITIATING GRAPH VERTICES
+            for(int i=0;i<res.Length;i++)
             {
-                //|| (char.IsLower(res[i]))
-                if(bonds.ContainsKey(res[i]) || (res[i] == ('(')) || (res[i] == (')')) || Char.IsDigit(res[i]))
+                if(char.IsLetter(res[i])&&(!char.IsLower(res[i])))
                 {
-                    continue;
+                    res2.Add(res[i]);
+                    graph.addVertex(i);
                 }
-                else 
-                {
-                    if(char.IsLower(res[i]))
-                    {
-                        if(graph.adjacencyList.ContainsKey(i-1)) continue;
-                        else
-                        {
-                            res2.Add(res[i-1]);
-                            Console.Write(i-1+" ");
-                            graph.addVertex(i-1);
-                        }
-                    }
-                    else
-                    {
-                        res2.Add(res[i]);
-                        Console.Write(i+" ");
-                        graph.addVertex(i);
-                    }
-                }
-            }    
+            }
 
             Console.WriteLine();     
 
             //PRINT THE LIST RES-->CONTAINS INPUT SMILES IN CHARACTER ARRAY FORM
+            Console.WriteLine("INPUT SMILES :");
             for(int i=0;i<res.Length;i++)
             {
                 Console.Write(res[i]+" ");
@@ -242,33 +231,96 @@ namespace xyz
             Console.WriteLine();
 
             //PRINT THE LIST RES2-->CONTAINS THE ELEMENTS IN THE INPUT SMILES
-            for(int i=0;i<res2.Count;i++){
-                Console.Write(res2[i]+" ");
-            }
+            // Console.WriteLine("ELEMENTS :");
+            // for(int i=0;i<res2.Count;i++)
+            // {
+            //     Console.Write(res2[i]+"  ");
+            // }
 
-            //DUMMY-->used for branch calcs
+            //DUMMY-->used for branch calculations.
             int[] arr = new int[100];
             int count = 0;     
 
-            //TRAVERSE THROUGH THE CHARACTER ARRAY AND INITIATE THE EDGE-WEIGHTS 
+            //TRAVERSE THROUGH THE GIVEN INPUT SMILES NOTATION AND INITIATING THE EDGE-WEIGHTS 
             for(int i=0;i<res.Count();i++)
             {   
-                //CHECK/LOGIC FOR RING STRUCTURES IN THE INPUT SMILES
+                //CHECK/LOGIC FOR RING STRUCTURES
                 if(char.IsDigit(res[i]))
-                {
-                    //int idx1=i,idx2=i+1;
+                {   
+                    int bond_value=0;
                     for(int j=i+1;j<res.Count();j++)
                     {
-                        //idx2=j;
-                        if(res[i]==res[j])//break;
+                        if(res[i]==res[j])
                         {
-                            if(char.IsLower(res[i-1])&&(char.IsLower(res[j-1]))) graph.addEdge(i-2,j-2,1);
-                            else if(char.IsLower(res[i-1])) graph.addEdge(i-2,j-1,1);
-                            else if(char.IsLower(res[j-1])) graph.addEdge(i-1,j-2,1);
-                            else graph.addEdge(i-1,j-1,1);        
+                            if(bonds.ContainsKey(res[i-1])||bonds.ContainsKey(res[j-1]))
+                            {
+                                if(bonds.ContainsKey(res[i-1])&&(bonds.ContainsKey(res[j-1]))&&(bonds.ContainsKey(res[i-1])==bonds.ContainsKey(res[j-1])))
+                                {
+                                    bond_value=bonds[res[i-1]];
+                                    if((char.IsLower(res[i-2]))&&(char.IsLower(res[j-2]))) 
+                                    {
+                                        graph.addEdge(i-3,j-3,bond_value);
+                                    }
+                                    else if(char.IsLower(res[i-2]))
+                                    {
+                                        graph.addEdge(i-3,j-2,bond_value);
+                                    }
+                                    else if(char.IsLower(res[j-2])) 
+                                    {
+                                        graph.addEdge(i-2,j-3,bond_value);
+                                    }
+                                    else 
+                                    {
+                                        graph.addEdge(i-2,j-2,bond_value); 
+                                    }
+                                }
+                                else if(bonds.ContainsKey(res[i-1]))
+                                {
+                                    bond_value=bonds[res[i-1]];
+                                    if(char.IsLower(res[i-2])) 
+                                    {
+                                        graph.addEdge(i-3,j-1,bonds[res[i-1]]);
+                                    }
+                                    else 
+                                    {
+                                        graph.addEdge(i-2,j-1,bond_value);
+                                    }
+                                }
+                                else 
+                                {
+                                    bond_value=bonds[res[j-1]];
+                                    if(char.IsLower(res[j-2])) 
+                                    {
+                                        graph.addEdge(i-1,j-3,bond_value);
+                                    }
+                                    else 
+                                    {
+                                        graph.addEdge(i-1,j-2,bond_value);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if(char.IsLower(res[i-1])&&(char.IsLower(res[j-1]))) 
+                                {
+                                    graph.addEdge(i-2,j-2,1);
+                                }
+                                else if(char.IsLower(res[i-1])) 
+                                {
+                                    graph.addEdge(i-2,j-1,1);
+                                }
+                                else if(char.IsLower(res[j-1])) 
+                                {
+                                    graph.addEdge(i-1,j-2,1);
+                                }
+                                else 
+                                {
+                                    graph.addEdge(i-1,j-1,1); 
+                                }
+                            }
                         }
-                        //graph.addEdge(i-1,j-1,1);
                     }
+
                 }
                 //CHECK/LOGIC FOR BRANCH STRUCTURES IN INPUT SMILES NOTATION
                 if((res[i]==')'))
@@ -303,7 +355,6 @@ namespace xyz
                 else if((res[i]=='(')&&(res[i-1]!=')'))
                 {
                     int bond = graph.findindexvalues(i,0);
-                    // graph.addEdge(i-1,i+2,bond);
                     if(char.IsLower(res[i-1]))
                     {
                         graph.addEdge(i-2,i+2,bond);
@@ -313,24 +364,36 @@ namespace xyz
                         graph.addEdge(i-1,i+2,bond);
                     }
                 }
-                //CHECK/LOGIC FOR BONDS IN INPUT SMILES NOTATION
-                if((bonds.ContainsKey(res[i]))&&(res[i-1]!=('('))&&(res[i-1]!=(')')))
+                //CHECK/LOGIC FOR BONDS IN INPUT SMILES NOTATION       
+                if((bonds.ContainsKey(res[i]))&&(res[i-1]!=('('))&&(res[i-1]!=(')'))&&(!char.IsDigit(res[i+1])))
                 {
                     if(char.IsDigit(res[i-1]))
-                    {
-                        if(char.IsLower(res[i-2]))
-                        {
-                            graph.addEdge(i-3,i+1,bonds[res[i]]);
+                    { 
+                        if(bonds.ContainsKey(res[i-2]))
+                        {  
+                            if(char.IsLower(res[i-3]))
+                            {
+                                graph.addEdge(i-4,i+1,bonds[res[i]]);
+                            } 
+                            else
+                            {
+                                graph.addEdge(i-3,i+1,bonds[res[i]]);
+                            }
                         }
                         else
                         {
-                            graph.addEdge(i-2,i+1,bonds[res[i]]);
+                            if(char.IsLower(res[i-2]))
+                            {
+                                graph.addEdge(i-3,i+1,bonds[res[i]]);
+                            }
+                            else
+                            {
+                                graph.addEdge(i-2,i+1,bonds[res[i]]);
+                            }
                         }
-                        //graph.addEdge(i-2,i+1,bonds[res[i]]);
                     }
                     else
                     {
-                        //graph.addEdge(i-1,i+1,bonds[res[i]]);
                         if(char.IsLower(res[i-1]))
                         {
                             graph.addEdge(i-2,i+1,bonds[res[i]]);
@@ -342,17 +405,19 @@ namespace xyz
                     }
                 }
             }
-Console.WriteLine();
+
             //IMPLICIT HYDROGEN INITIALIZATION
-            Console.WriteLine("IMPLICIT HYDROGEN COUNT");
+            Console.WriteLine("\nIMPLICIT HYDROGEN COUNT\n");
             implicitHydrogenIndex();
+
             //ADJACENCY MATRIX GENERATION
-            Console.WriteLine("ADJACENCY MATRIX");
-            adjacencyMatrix(res2.Count);
+            Console.WriteLine("\nADJACENCY MATRIX\n");
+            adjacencyMatrix(res2.Count); //here res2.Count-->is the number of elements in the given input smiles notation.
+
+            Console.WriteLine();
 
             //PRINTING THE GRAPH
-            Console.WriteLine("VERTEX-->VERTEX : BOND-VALUE");
-            
+            // VERTEX-->VERTEX : BOND-VALUE --> format of printing the graph
             foreach (var x in graph.adjacencyList)
             { 
                 Console.WriteLine(x.Key);
@@ -361,7 +426,7 @@ Console.WriteLine();
                     Console.WriteLine("vertex " + x.Key + " ---> " + y.Key + ": "+y.Value);
                 }
             }
+
         }
     }
 }
-
